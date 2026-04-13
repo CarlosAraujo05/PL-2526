@@ -151,27 +151,18 @@ def print_test_result(name, test_case):
     
     print("\nTokens Gerados (pelo Lexer):")
     try:
-        # Criar lexer local
+        # Garantir que o módulo `lexer` esteja carregado e usar a função get_tokens
         import importlib
-        lexer_module = importlib.import_module('lexer')
-        lex_gen = lexer_module.lex.lex(reflags=re.IGNORECASE | re.MULTILINE)
-        lex_gen.input(test_case['code'])
-        
-        generated_tokens = []
-        while True:
-            tok = lex_gen.token()
-            if not tok:
-                break
-            if tok.type != 'IDENTATION':
-                generated_tokens.append(format_token(tok))
-        
+        importlib.import_module('lexer')
+        generated_tokens = [format_token(tok) for tok in get_tokens(test_case['code'])]
+
         print(f"  {' '.join(generated_tokens)}")
-        
+
         # Validação
         match = ' '.join(generated_tokens) == ' '.join(test_case['expected_tokens'])
         status = "✅ VÁLIDO" if match else "⚠️ DIFERENÇA"
         print(f"\nStatus: {status}")
-        
+
     except Exception as e:
         print(f"  ❌ Erro ao gerar tokens: {e}")
     
