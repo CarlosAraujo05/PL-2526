@@ -41,7 +41,29 @@ def t_ID(t):
 
 def t_NUMBER(t):
     r'\d+(\.\d+)?([EDed][-+]?\d+)?'
-    # This regex handles integers, reals, and scientific notation
+    # This regex handles integers, reals, and scientific notation.
+    # If the numeric literal immediately follows a `DO` keyword (e.g., 'DO 10 I = ...'),
+    # treat it as a `LABEL` token rather than a numeric constant.
+    try:
+        start = t.lexpos
+        s = t.lexer.lexdata
+        # Walk backwards skipping whitespace to find the previous word
+        i = start - 1
+        while i >= 0 and s[i] in ' \t':
+            i -= 1
+        # Collect alphabetic characters immediately before the number
+        j = i
+        while j >= 0 and s[j].isalpha():
+            j -= 1
+        prev_word = s[j+1:i+1] if i >= j+1 else ''
+        if prev_word.upper() == 'DO':
+            t.type = 'LABEL'
+            t.value = int(t.value)
+            return t
+    except Exception:
+        # Fallback to default behavior on any unexpected issue
+        pass
+
     t.value = float(t.value) if '.' in t.value or 'E' in t.value.upper() else int(t.value)
     return t
 
