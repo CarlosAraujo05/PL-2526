@@ -160,28 +160,63 @@ def p_common_declaration(p):
                           | COMMON '/' ID '/' id_list common_continuation"""
     block_name = p[3]
     ids = p[5]
-    # TODO: Handle common_continuation for multiple blocks
-    p[0] = CommonDeclaration(block_name=block_name, ids=ids, lineno=p.lineno(1))
+    
+    # Merge with common_continuation if present
+    if len(p) == 7 and p[6] is not None:
+        # Append continuation blocks (names and ids)
+        continuation_blocks = p[6]
+        # For now, we use the first block's name and merge all ids
+        all_ids = ids + continuation_blocks['ids']
+        p[0] = CommonDeclaration(block_name=block_name, ids=all_ids, lineno=p.lineno(1))
+    else:
+        p[0] = CommonDeclaration(block_name=block_name, ids=ids, lineno=p.lineno(1))
 
 
 def p_common_continuation(p):
     """common_continuation : ',' '/' ID '/' id_list
                             | common_continuation ',' '/' ID '/' id_list"""
-    # Placeholder for continuation
-    p[0] = None
+    if len(p) == 6:
+        # First rule: single continuation block
+        # Return dict with block name and ids
+        p[0] = {'block_name': p[3], 'ids': p[5]}
+    else:
+        # Second rule: continuation of continuations
+        # Merge with previous continuation
+        prev = p[1]
+        prev['ids'].extend(p[6])
+        p[0] = prev
 
 
 def p_equivalence_declaration(p):
     """equivalence_declaration : EQUIVALENCE '(' ID ',' ID ')' equivalence_continuation"""
+    # Start with the first group
     groups = [(p[3], p[5])]
-    # TODO: Merge with equivalence_continuation
+    
+    # Merge with equivalence_continuation if present
+    if p[7] is not None:
+        # p[7] returns a list of additional groups
+        groups.extend(p[7])
+    
     p[0] = EquivalenceDeclaration(groups=groups, lineno=p.lineno(1))
 
 
 def p_equivalence_continuation(p):
     """equivalence_continuation : '(' ID ',' ID ')' equivalence_continuation
                                 | empty"""
-    p[0] = None
+    if p[1] is None:
+        # Empty production
+        p[0] = None
+    else:
+        # '(' ID ',' ID ')' equivalence_continuation
+        current_group = (p[2], p[4])
+        rest = p[6]
+        
+        if rest is None:
+            # This is the last group
+            p[0] = [current_group]
+        else:
+            # Prepend current group to rest
+            p[0] = [current_group] + rest
 
 
 def p_external_declaration(p):
@@ -569,7 +604,7 @@ def p_read_item(p):
 
 def p_write_statement(p):
     """write_statement : WRITE '(' unit ',' format ')' read_list"""
-    p[0] = WriteStatement(unit=p[3], format_spec=p[5], lineno=p.lineno(1))
+    p[0] = WriteStatement(unit=p[3], format_spec=p[5], expressions=p[7], lineno=p.lineno(1))
 
 
 def p_print_statement(p):

@@ -5,6 +5,10 @@
 # PROGRAM STRUCTURE
 # ============================================================================
 
+program_unit -> program
+              | program_unit function_definition
+              | program_unit subroutine_definition
+
 program -> PROGRAM ID declaration_block statement_block END
 
 declaration_block -> declaration declaration_block
@@ -28,8 +32,8 @@ declaration -> type_declaration
              | intrinsic_declaration
              | blockdata_declaration
 
-type_declaration -> base_type id_list
-                  | base_type DIMENSION '(' dimension_list ')' id_list
+type_declaration -> base_type id_or_array_list
+                   | base_type DIMENSION '(' dimension_list ')' id_list
 
 base_type -> INTEGER
            | REAL
@@ -44,6 +48,12 @@ dimension_list -> dimension_item
 
 dimension_item -> INTEGER_LIT
                 | INTEGER_LIT ':' INTEGER_LIT
+
+id_or_array_list -> id_or_array
+                  | id_or_array_list ',' id_or_array
+
+id_or_array -> ID
+             | ID '(' dimension_list ')'
 
 id_list -> ID
          | id_list ',' ID
@@ -86,7 +96,7 @@ blockdata_declaration -> BLOCKDATA ID
 # STATEMENTS
 # ============================================================================
 
-labeled_statement -> LABEL statement
+labeled_statement -> INTEGER_LIT statement
                    | statement
 
 statement -> assignment_statement
@@ -176,10 +186,10 @@ else_clause -> ELSE statement_block
              | ELSEIF '(' expression ')' THEN statement_block else_clause
              | ε
 
-do_loop -> DO LABEL ID '=' expression ',' expression statement_block LABEL CONTINUE
-         | DO LABEL ID '=' expression ',' expression ',' expression statement_block LABEL CONTINUE
+do_loop -> DO INTEGER_LIT ID '=' expression ',' expression statement_block INTEGER_LIT CONTINUE
+         | DO INTEGER_LIT ID '=' expression ',' expression ',' expression statement_block INTEGER_LIT CONTINUE
 
-goto_statement -> GOTO LABEL
+goto_statement -> GOTO INTEGER_LIT
 
 # ============================================================================
 # I/O STATEMENTS
@@ -195,16 +205,22 @@ io_statement -> read_statement
               | rewind_statement
               | endfile_statement
 
-read_statement -> READ '*' ',' id_list
-                | READ '(' unit ',' format ')' id_list
+read_statement -> READ '*' ',' read_list
+                | READ '(' unit ',' format ')' read_list
 
-write_statement -> WRITE '(' unit ',' format ')' id_list
+write_statement -> WRITE '(' unit ',' format ')' read_list
 
 print_statement -> PRINT '*' ',' output_list
                  | PRINT format ',' output_list
 
 output_list -> expression
              | output_list ',' expression
+
+read_list -> read_item
+           | read_list ',' read_item
+
+read_item -> ID
+           | array_access
 
 open_statement -> OPEN '(' open_spec_list ')'
 
@@ -252,8 +268,8 @@ pause_statement -> PAUSE
 subroutine_def -> SUBROUTINE ID '(' parameter_list ')' declaration_block statement_block END
                 | SUBROUTINE ID '(' ')' declaration_block statement_block END
 
-function_def -> base_type FUNCTION ID '(' parameter_list ')' declaration_block statement_block RETURN END
-              | base_type FUNCTION ID '(' ')' declaration_block statement_block RETURN END
+function_def -> base_type FUNCTION ID '(' parameter_list ')' declaration_block statement_block END
+              | base_type FUNCTION ID '(' ')' declaration_block statement_block END
 
 parameter_list -> ID
                 | parameter_list ',' ID
