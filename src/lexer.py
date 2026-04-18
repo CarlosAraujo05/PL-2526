@@ -20,17 +20,9 @@ operators = [
     'TRUE', 'FALSE', # .TRUE. , .FALSE.
     'POW'
 ]
-tokens = keywords + operators + ['ID', 'NUMBER', 'STRING', 'LABEL', 'IDENTATION']
+tokens = keywords + operators + ['ID','INTEGER_LIT', 'REAL_LIT', 'STRING_LIT','LABEL']
 
 literals = ['+', '-', '*', '/', '(', ')', ',', '=', ':', '*']
-
-def t_LABEL(t):
-    r'^[ ]{0,5}\d+' # Fortran 77 labels occur in columns 1-5
-    t.value = int(t.value)
-    return t
-def t_IDENTATION(t):
-    r'^[ ]{6}' # Capture leading whitespace for indentation
-    return t    
 
 def t_ID(t):
     r'[a-zA-Z][a-zA-Z0-9]*'
@@ -39,35 +31,17 @@ def t_ID(t):
         t.type = t.value.upper()
     return t
 
-def t_NUMBER(t):
-    r'\d+(\.\d+)?([EDed][-+]?\d+)?'
-    # This regex handles integers, reals, and scientific notation.
-    # If the numeric literal immediately follows a `DO` keyword (e.g., 'DO 10 I = ...'),
-    # treat it as a `LABEL` token rather than a numeric constant.
-    try:
-        start = t.lexpos
-        s = t.lexer.lexdata
-        # Walk backwards skipping whitespace to find the previous word
-        i = start - 1
-        while i >= 0 and s[i] in ' \t':
-            i -= 1
-        # Collect alphabetic characters immediately before the number
-        j = i
-        while j >= 0 and s[j].isalpha():
-            j -= 1
-        prev_word = s[j+1:i+1] if i >= j+1 else ''
-        if prev_word.upper() == 'DO':
-            t.type = 'LABEL'
-            t.value = int(t.value)
-            return t
-    except Exception:
-        # Fallback to default behavior on any unexpected issue
-        pass
-
-    t.value = float(t.value) if '.' in t.value or 'E' in t.value.upper() else int(t.value)
+def t_INTEGER_LIT(t):
+    r'\d+(?![.\dEDed])'  #digito sem decimais
+    t.value = int(t.value)
     return t
 
-def t_STRING(t):
+def t_REAL_LIT(t):
+    r'\d+\.\d+([EDed][-+]?\d+)?|\d+[EDed][-+]?\d+'
+    t.value = float(t.value)
+    return t
+
+def t_STRING_LIT(t):
     r"'.*?'"
     t.value = t.value[1:-1]  # Remove the surrounding quotes
     return t
@@ -93,38 +67,46 @@ def t_COMMENT(t):
     t.lexer.lineno += 1
     return None
 
-t_ignore = '\t'
-def t_WHITESPACE(t):
-    r'[ \r]+'
-    return None
+t_ignore = ' \t'
 
 def t_NEWLINE(t):
     r'\n+'
     t.lexer.lineno += len(t.value)
-
+class LexerError(Exception):
+    pass
 def t_error(t):
-    print(f"Caractere ilegal: {t.value[0]} na linha {t.lineno}")
-    t.lexer.skip(1)
+    raise LexerError(f"Caractere ilegal: {t.value[0]} na linha {t.lineno}")
 
-# --- Execução ---
+# --- Lexer Factory ---
+
+def build_lexer(debug=False):
+    """Build and return the lexer."""
+    return lex.lex(reflags=re.IGNORECASE | re.MULTILINE, debug=debug)
+
 
 def main():
     if len(sys.argv) < 2:
-        print(f"Uso: python {sys.argv[0]}.py arquivo.for")
+        print(f"Uso: python {sys.argv[0]} arquivo.for")
         return
 
-    lexer = lex.lex(reflags=re.IGNORECASE| re.MULTILINE)
-    
-    with open(sys.argv[1], 'r') as file:
-        data = file.read()
+    lexer = build_lexer()
+    try:
+        with open(sys.argv[1], 'r') as file:
+            data = file.read()
+            
         lexer.input(data)
         
         # Loop para imprimir os tokens gerados
-        while True:
-            tok = lexer.token()
-            if not tok:
-                break
+        for tok in lexer:
             print(tok)
+    except FileNotFoundError:
+        print(f"Erro: O arquivo '{sys.argv[1]}' não foi encontrado.")
+    except PermissionError:
+        print(f"Erro: Permissão negada para ler o arquivo '{sys.argv[1]}'.")
+    except LexerError as e:
+        print(f"Erro Léxico: {e}")
+    except Exception as e:
+        print(f"Ocorreu um erro inesperado: {e}")
 
 if __name__ == "__main__":
     main()

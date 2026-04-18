@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+parser.out
+*.log
+parser.tab
