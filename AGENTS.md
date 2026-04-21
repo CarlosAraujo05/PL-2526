@@ -18,8 +18,6 @@ Higher grades require an intermediate representation (IR), optimisation passes, 
 │   ├── parser.py         # Syntactic + semantic analysis — builds the AST
 │   ├── ast_nodes.py      # AST node class hierarchy
 │   ├── symbol_table.py   # Symbol table implementation
-│   ├── ir.py             # Intermediate representation (valorização path)
-│   ├── optimiser.py      # Local + global optimisation passes (valorização path)
 │   └── codegen.py        # VM code emitter
 ├── tests/
 │   ├── hello.for
@@ -47,7 +45,8 @@ Respect this layout. Do not merge unrelated concerns into a single file.
 
 | Category | Examples |
 |---|---|
-| Keywords | `PROGRAM`, `END`, `INTEGER`, `REAL`, `LOGICAL`, `CHARACTER`, `IF`, `THEN`, `ELSE`, `ENDIF`, `DO`, `CONTINUE`, `GOTO`, `READ`, `PRINT`, `RETURN`, `STOP`, `SUBROUTINE`, `FUNCTION`, `CALL` |
+| Keywords (only these)| `PROGRAM`, `END`, `INTEGER`, `LOGICAL`, `REAL`, `PRINT`, `READ`, `DO`, `CONTINUE`, `IF`, `THEN`, `ELSE`,`ELSEIF`, `ENDIF`, `GOTO`,|
+| |`FUNCTION`, `RETURN`, `DIMENSION`, `SUBROUTINE`, `CALL`, `PARAMETER`, `CHARACTER` |
 | Logical literals | `.TRUE.`, `.FALSE.` |
 | Relational operators | `.EQ.`, `.NE.`, `.LT.`, `.LE.`, `.GT.`, `.GE.` |
 | Logical operators | `.AND.`, `.OR.`, `.NOT.` |
@@ -69,20 +68,15 @@ Respect this layout. Do not merge unrelated concerns into a single file.
 Whichever is chosen, document it in the report. The lexer **must not** silently accept both.
 
 #### PLY-specific rules
-
+use PLY's conventions for token definitions as much as possible. Don't write hardcoded python code to match tokens; instead, leverage PLY's regex-based token definitions.
 ```python
-# Keyword map — avoids one rule per keyword
-keywords = {kw: kw for kw in ['PROGRAM', 'INTEGER', 'REAL', ...]}
-tokens = list(reserved.values()) + ['ID', 'INTEGER_LIT', 'REAL_LIT', 'STRING_LIT', ...]
+# Define tokens like this with uppercase names and raw docstrings for regexes. The docstring is the regex pattern.
 
 def t_ID(t):
     r'[A-Za-z][A-Za-z0-9]{0,5}'
-    t.type = keywords.get(t.value.upper(), 'ID')
-    t.value = t.value.upper()   # Fortran is case-insensitive; normalise early
+    t.value = t.value.upper()   # Fortran is case-insensitive; normalise early  all identifiers and keywords to **uppercase** in the lexer so the parser can assume it.
     return t
 ```
-
-Normalise all identifiers and keywords to **uppercase** in the lexer so the parser can assume it.
 
 ---
 
@@ -162,6 +156,15 @@ Raise a descriptive `SemanticError` (not a bare `Exception`) on conflicts or und
 - Every grammar rule must have a docstring that is the BNF/EBNF production.
 - Group related rules together (declarations, expressions, statements, control flow).
 
+```python
+#like this, with clear docstrings and consistent naming:
+def p_program(p):
+    '''
+    program : PROGRAM ID declarations body END
+    '''
+    # Do semantic checks, build AST node, etc.
+```
+
 #### Semantic checks to perform during parsing
 
 These must raise a `SemanticError` with a meaningful message and line number:
@@ -206,20 +209,6 @@ method that appends to an internal list; flush to a file at the end.
 Keep a **label counter** (`self._label_counter`) to generate unique VM labels (`L0`, `L1`, …).
 
 ---
-
-### `ir.py` and `optimiser.py` — Valorização Path Only
-
-Implement a Three-Address Code (TAC) IR if targeting a grade above 10/20.
-
-```python
-@dataclass
-class TACInstr:
-    op: str          # 'ADD', 'SUB', 'ASSIGN', 'LABEL', 'JUMP', 'JZ', 'CALL', ...
-    result: str | None
-    arg1: str | None
-    arg2: str | None
-```
-
 #### Minimum optimisation passes for valorização
 
 1. **Constant folding** — evaluate `2 + 3` at compile time.
@@ -272,6 +261,9 @@ python3 src/lexer.py  tests/file.for
 python3 src/parser.py  tests/file.for
 # Run all tests (once a test harness exists)
 python3 -m pytest tests/
+
+# Compile the technical report into PDF using Typst
+typst compile docs/main.typ docs/PL-G52.pdf    
 ```
 
 ---
@@ -294,16 +286,6 @@ python3 -m pytest tests/
 - No magic numbers — use named constants or enums for opcodes, types, and error codes.
 - The grammar file (`parser.py`) must be readable: group rules, add comments for non-obvious productions.
 - Run `pylint src/` before committing; target a score ≥ 8/10.
-
----
-
-## Key Deadlines
-
-| Milestone | Date |
-|---|---|
-| Group registration | 05 April 2026 |
-| Final submission (last GitHub commit) | 17 May 2026 at 23:59 |
-| Project defence | 01–05 June 2026 |
 
 ---
 
