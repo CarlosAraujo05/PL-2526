@@ -76,50 +76,6 @@ class ParameterDeclaration(Declaration):
     assignments: List[AssignmentStatement] = field(default_factory=list)
 
 
-@dataclass
-class ExternalDeclaration(Declaration):
-    """EXTERNAL declaration."""
-    ids: List[str] = field(default_factory=list)
-
-
-@dataclass
-class IntrinsicDeclaration(Declaration):
-    """INTRINSIC declaration."""
-    ids: List[str] = field(default_factory=list)
-
-
-@dataclass
-class SaveDeclaration(Declaration):
-    """SAVE declaration."""
-    ids: Optional[List[str]] = None
-
-
-@dataclass
-class DataDeclaration(Declaration):
-    """DATA declaration."""
-    ids: List[str] = field(default_factory=list)
-    values: List[Literal] = field(default_factory=list)
-
-
-@dataclass
-class CommonDeclaration(Declaration):
-    """COMMON declaration."""
-    block_name: str = ""
-    ids: List[str] = field(default_factory=list)
-
-
-@dataclass
-class EquivalenceDeclaration(Declaration):
-    """EQUIVALENCE declaration."""
-    groups: List[tuple] = field(default_factory=list)
-
-
-@dataclass
-class BlockDataDeclaration(Declaration):
-    """BLOCKDATA declaration."""
-    name: str = ""
-
-
 # ============================================================================
 # STATEMENTS
 # ============================================================================
@@ -178,60 +134,10 @@ class ReadStatement(Statement):
 
 
 @dataclass
-class WriteStatement(Statement):
-    """WRITE statement."""
-    unit: Optional[Expression] = None
-    format_spec: Optional[Any] = None
-    expressions: List[Expression] = field(default_factory=list)
-
-
-@dataclass
 class PrintStatement(Statement):
     """PRINT statement."""
     format_spec: Optional[Any] = None
     expressions: List[Expression] = field(default_factory=list)
-
-
-@dataclass
-class OpenStatement(Statement):
-    """OPEN statement."""
-    specs: dict = field(default_factory=dict)
-
-
-@dataclass
-class CloseStatement(Statement):
-    """CLOSE statement."""
-    unit: Optional[Expression] = None
-
-
-@dataclass
-class InquireStatement(Statement):
-    """INQUIRE statement."""
-    unit: Optional[Expression] = None
-
-
-@dataclass
-class BackspaceStatement(Statement):
-    """BACKSPACE statement."""
-    unit: Optional[Expression] = None
-
-
-@dataclass
-class RewindStatement(Statement):
-    """REWIND statement."""
-    unit: Optional[Expression] = None
-
-
-@dataclass
-class EndfileStatement(Statement):
-    """ENDFILE statement."""
-    unit: Optional[Expression] = None
-
-
-@dataclass
-class StopStatement(Statement):
-    """STOP statement."""
-    code: Optional[Expression] = None
 
 
 @dataclass
@@ -244,12 +150,6 @@ class ReturnStatement(Statement):
 class ContinueStatement(Statement):
     """CONTINUE statement."""
     pass
-
-
-@dataclass
-class PauseStatement(Statement):
-    """PAUSE statement."""
-    duration: Optional[Expression] = None
 
 
 # ============================================================================

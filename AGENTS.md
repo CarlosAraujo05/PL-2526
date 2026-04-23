@@ -60,7 +60,7 @@ Respect this layout. Do not merge unrelated concerns into a single file.
 
 #### Format decision — make it explicit in this file
 
-**Chosen format:  `Free`** 
+**Chosen format:  `Fixed`** 
 - **Fixed format (columns 1–5 label, column 6 continuation, columns 7–72 statement):** requires the
   lexer to strip and interpret column positions. Use `t_newline` and track line offsets.
 - **Free format:** simpler to implement; treat the source as plain text. Recommended if time is limited.
