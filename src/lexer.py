@@ -61,8 +61,7 @@ class FortranPreprocessor:
 # Keywords from AGENTS.md specification (lines 48-49)
 keywords = [
     'PROGRAM', 'END',
-    'INTEGER', 'LOGICAL', 'REAL', 'CHARACTER',
-    'DIMENSION', 'PARAMETER',
+    'INTEGER', 'LOGICAL', 'REAL', 'CHARACTER', 'PARAMETER',
     'IF', 'THEN', 'ELSE', 'ELSEIF', 'ENDIF',
     'DO', 'CONTINUE', 'GOTO',
     'READ', 'PRINT',
@@ -77,9 +76,9 @@ operators = [
     'POW'
 ]
 
-tokens = keywords + operators + ['ID', 'INTEGER_LIT', 'REAL_LIT', 'STRING_LIT', 'LABEL']
+tokens = keywords + operators + ['ID', 'INTEGER_LIT', 'REAL_LIT', 'STRING_LIT']
 
-literals = ['+', '-', '*', '/', '(', ')', ',', '=', ':', '*']
+literals = ['+', '-', '*', '/', '(', ')', ',', '=', ':']
 
 # --- Keyword token definitions (one per keyword, case-insensitive via reflags) ---
 def t_PROGRAM(t):
@@ -129,11 +128,6 @@ def t_REAL(t):
 
 def t_LOGICAL(t):
     r'LOGICAL'
-    t.value = t.value.upper()
-    return t
-
-def t_DIMENSION(t):
-    r'DIMENSION'
     t.value = t.value.upper()
     return t
 

@@ -22,11 +22,9 @@ statement_block -> labeled_statement statement_block
 # ============================================================================
 
 declaration -> type_declaration
-             | dimension_declaration
              | parameter_declaration
 
 type_declaration -> base_type id_or_array_list
-                   | base_type DIMENSION '(' dimension_list ')' id_list
 
 base_type -> INTEGER
            | REAL
@@ -34,26 +32,18 @@ base_type -> INTEGER
            | CHARACTER
            | CHARACTER '*' INTEGER_LIT
 
-dimension_list -> dimension_item
-                | dimension_list ',' dimension_item
-
-dimension_item -> INTEGER_LIT
-                | INTEGER_LIT ':' INTEGER_LIT
-
 id_or_array_list -> id_or_array
                   | id_or_array_list ',' id_or_array
 
 id_or_array -> ID
-             | ID '(' dimension_list ')'
+             | ID '(' INTEGER_LIT ')'
 
-id_list -> ID
-         | id_list ',' ID
+parameter_declaration -> PARAMETER '(' assignment_list ')'
 
-# Removed: dimension_declaration, common_declaration, common_continuation,
-# equivalence_declaration, equivalence_continuation, external_declaration,
-# intrinsic_declaration, data_declaration, literal_list, save_declaration,
-# blockdata_declaration (unsupported keywords)
+assignment_list -> assignment
+                 | assignment_list ',' assignment
 
+assignment -> ID '=' literal 
 # ============================================================================
 # STATEMENTS
 # ============================================================================
@@ -73,10 +63,8 @@ statement -> assignment_statement
 assignment_statement -> ID '=' expression
                       | array_access '=' expression
 
-array_access -> ID '(' index_list ')'
+array_access -> ID '(' expression ')'
 
-index_list -> expression
-            | index_list ',' expression
 
 # ============================================================================
 # EXPRESSIONS
@@ -206,5 +194,3 @@ function_def -> base_type FUNCTION ID '(' parameter_list ')' declaration_block s
 
 parameter_list -> ID
                 | parameter_list ',' ID
-    
-

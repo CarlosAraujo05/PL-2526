@@ -57,20 +57,6 @@ class TypeDeclaration(Declaration):
 
 
 @dataclass
-class ArrayDeclaration(Declaration):
-    """Array dimension declaration."""
-    var: str = ""
-    dimensions: List[tuple] = field(default_factory=list)
-
-
-@dataclass
-class DimensionDeclaration(Declaration):
-    """DIMENSION statement."""
-    var: str = ""
-    dimensions: List[tuple] = field(default_factory=list)
-
-
-@dataclass
 class ParameterDeclaration(Declaration):
     """PARAMETER declaration."""
     assignments: List[AssignmentStatement] = field(default_factory=list)
@@ -185,9 +171,9 @@ class Variable(Expression):
 
 @dataclass
 class ArrayAccess(Expression):
-    """Array element access: arr(i, j, ...)."""
+    """Array element access: arr(i)."""
     name: str = ""
-    indices: List[Expression] = field(default_factory=list)
+    indices: Optional[Expression] = None 
 
 
 @dataclass
