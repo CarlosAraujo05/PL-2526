@@ -11,13 +11,7 @@
 
   set heading(numbering: "1.")
   
-  show heading: it => {
-    if it.level == 1 {
-      pagebreak()
-      block(below: 0em)
-    }
-    it
-  }
+  // Page breaks removed to save space - sections flow naturally
 
   show heading: set block(above: 2em, below: 1em)
 

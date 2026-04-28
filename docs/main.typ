@@ -51,3 +51,13 @@ Standard",
     xml: (name: "python", color: rgb("#00599C")),
   )
 )
+
+#include "01-introducao.typ"
+#include "02-arquitetura.typ"
+#include "03-lexico.typ"
+#include "04-sintatico.typ"
+#include "05-semantico.typ"
+#include "06-ast.typ"
+#include "07-codegen.typ"
+#include "08-testes.typ"
+#include "09-conclusoes.typ"
