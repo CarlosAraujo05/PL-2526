@@ -26,7 +26,15 @@ A compiler for **Fortran 77 (ANSI X3.9-1978)** targeting a course-provided Virtu
 ## Building
 
 ```bash
-python3 src/parser.py tests/hello.for
+python3 src/main.py tests/hello.for
+# This generates tests/hello.vm
+```
+
+## Testing
+
+Run the automated test suite against the 5 included Fortran programs:
+```bash
+python3 -m pytest tests/test_compiler.py
 ```
 
 ## Design Decisions

@@ -1,9 +1,7 @@
 = Análise Sintática
-// - Gramática independente de contexto (BNF) em CFG.md
-// - Implementação com PLY Yacc (parser.py)
-// - Construção da Árvore Sintática Abstrata (AST)
-// - Tratamento de erros sintáticos
 
-O `parser.py` usa `ply.yacc` (LALR(1)) com gramática BNF em `CFG.md`. A precedência de operadores é garantida pela hierarquia: `logical_or` → `logical_and` → `relational` → `additive` → `multiplicative` → `power` → `unary` → `primary`.
+A análise sintática baseou-se na implementação rigorosa da Context-Free Grammar (CFG) desenvolvida para a norma em questão (ver anexo em formato `CFG.md`). A sua base é LALR(1) suportada diretamente pelas implementações estritas da engine PLY Yacc via módulo `parser.py`.
 
-O parser integra verificações semânticas: duplicados, variáveis não declaradas, dimensões de arrays, labels em ciclos `DO`, e saltos `GOTO`. Cada regra constrói nós da AST (`ast_nodes.py`). Erros sintáticos lançam `SyntaxError`, semânticos lançam `SemanticError`.
+A priorização operacional de expressões avaliadas obedece estritamente às tabelas da linguagem: primeiramente operações lógicas, relacionais, até à base aritmética (`logical_or` → `logical_and` → `relational` → `additive` → `multiplicative` → `power` → `unary` → `primary`).
+
+Concomitantemente à validação gramatical da cadeia, o módulo sintático executa e gere chamadas assíncronas à infraestrutura Semântica, parando ou garantindo o avanço se as regras de alocação se provarem válidas (variáveis declaradas, acessos dentro de arrays declarados como limitados a 1 Dimensão, blocos aninhados e `GOTO` matches). No final da verificação descendente com sucesso em cada ramificação da regra gramatical (`p_[rule]`), instanciam-se _Dataclasses_ limpas injetáveis para a construção integral da *Abstract Syntax Tree (AST)*. Em caso de divergência estrita (como falta de parentesis e terminação incorreta de loop `DO`), é injetado o respetivo lançamento para o standard output em formato legível de `SyntaxError`.

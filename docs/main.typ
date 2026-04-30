@@ -12,7 +12,8 @@
 Standard", 
   authors: (
   (name: "Carlos Araújo", number: "A106845"),
-  (name: "Vitor Senra", number: "A106921")
+  (name: "Vitor Senra", number: "A106921"),
+  (name: "Hugo Soares", number: "A107293")
 ),
   datetime.today().display("[month repr:long] [day], [year]"))
 
