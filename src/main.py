@@ -1,5 +1,5 @@
 from lexer import build_lexer, LexerError
-from parser import build_parser, SyntaxError, SemanticError
+from parser import build_parser, SyntaxError, SemanticError, validate_goto_labels
 from optimizer import Optimizer
 from codegen import CodeGen
 import sys
@@ -20,6 +20,9 @@ def main():
         ast = parser.parse(lexer=lexer)
 
         if ast is not None:
+
+            # Validate GOTO labels after parsing (allows forward references)
+            validate_goto_labels(parser)
             # Optimize AST
             opt = Optimizer()
             ast = opt.optimize(ast)

@@ -9,7 +9,7 @@ Maintains symbol information with support for:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Dict
 
 
 # ============================================================================
@@ -22,17 +22,17 @@ class Symbol:
     name: str
     kind: str          # 'variable', 'array', 'function', 'subroutine', 'parameter'
     dtype: str         # 'INTEGER', 'REAL', 'LOGICAL', 'CHARACTER'
-    dimensions: List[Tuple[int, int]] = field(default_factory=list)  # List of (lower, upper) bounds
+    dimensions: Optional[int] = None  # Unidimensional array length (None = scalar)
     lineno: int = 0    # Declaration line number for error reporting
     initialized: bool = False  # Whether variable has been assigned
 
     def is_array(self) -> bool:
         """Check if this symbol represents an array."""
-        return len(self.dimensions) > 0
+        return self.dimensions is not None
 
     def is_scalar(self) -> bool:
         """Check if this symbol represents a scalar variable."""
-        return len(self.dimensions) == 0
+        return self.dimensions is None
 
     def is_parameter(self) -> bool:
         """Check if this symbol is a parameter (constant)."""
@@ -40,7 +40,7 @@ class Symbol:
 
     def __repr__(self) -> str:
         """String representation for debugging."""
-        dims_str = f" [{', '.join(f'{l}:{u}' for l, u in self.dimensions)}]" if self.dimensions else ""
+        dims_str = f" [len={self.dimensions}]" if self.dimensions is not None else ""
         return f"Symbol({self.name}:{self.dtype}{dims_str}, kind={self.kind}, line={self.lineno})"
 
 
@@ -245,9 +245,9 @@ class SymbolTable:
                 lineno
             )
 
-        if dimension_count != len(symbol.dimensions):
+        if dimension_count != 1:
             raise SemanticError(
-                f"Array '{name}' has {len(symbol.dimensions)} dimensions "
+                f"Array '{name}' is unidimensional, expected 1 subscript "
                 f"but {dimension_count} subscripts provided",
                 lineno
             )
