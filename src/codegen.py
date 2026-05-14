@@ -119,7 +119,7 @@ class CodeGen:
         elif isinstance(node.target, ArrayAccess):
             # Array store: push base addr, push index (0-based), push value, STOREN
             self._push_var(node.target.name)      # address
-            self.visit(node.target.indices)       # index (1-based in Fortran)
+            self.visit(node.target.index)         # index (1-based in Fortran)
             self.emit("PUSHI 1")
             self.emit("SUB")                      # convert to 0-based
             self.visit(node.value)                # value
@@ -224,7 +224,7 @@ class CodeGen:
             elif isinstance(var, ArrayAccess):
                 # Array read: push base addr, push 0-based index, READ, ATOI, STOREN
                 self._push_var(var.name)
-                self.visit(var.indices)
+                self.visit(var.index)
                 self.emit("PUSHI 1")
                 self.emit("SUB")
                 self.emit("READ")
@@ -283,7 +283,7 @@ class CodeGen:
     def visit_ArrayAccess(self, node: ArrayAccess):
         # Array read: push base addr, push index (0-based), LOADN
         self._push_var(node.name)
-        self.visit(node.indices)
+        self.visit(node.index)
         self.emit("PUSHI 1")
         self.emit("SUB")  # Fortran is 1-based, VM is 0-based
         self.emit("LOADN")

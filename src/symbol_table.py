@@ -191,11 +191,14 @@ class SymbolTable:
         """
         Check if source_type can be assigned to target_type.
 
-        Fortran 77 allows implicit type conversions:
-        - INTEGER ← INTEGER, REAL (truncated), LOGICAL (0/1)
-        - REAL ← INTEGER, REAL, LOGICAL (0.0/1.0)
-        - LOGICAL ← LOGICAL, INTEGER (0/.not.0), REAL (0.0/.not.0.0)
-        - CHARACTER ← CHARACTER, (limited others)
+        This compiler enforces stricter type safety than standard Fortran 77:
+        - INTEGER ← INTEGER, REAL (truncated)
+        - REAL ← INTEGER, REAL
+        - LOGICAL ← LOGICAL only
+        - CHARACTER ← CHARACTER only
+
+        LOGICAL → INTEGER/REAL and INTEGER/REAL → LOGICAL are explicitly
+        rejected per AGENTS.md §Parser / Semantic checks point 3.
 
         Args:
             source_type: Type being assigned
@@ -207,17 +210,17 @@ class SymbolTable:
         if source_type == target_type:
             return True
 
-        # INTEGER can accept REAL (with truncation) or LOGICAL
+        # INTEGER can accept REAL (with truncation)
         if target_type == 'INTEGER':
-            return source_type in ('REAL', 'LOGICAL')
+            return source_type == 'REAL'
 
-        # REAL can accept INTEGER or LOGICAL
+        # REAL can accept INTEGER
         if target_type == 'REAL':
-            return source_type in ('INTEGER', 'LOGICAL')
+            return source_type == 'INTEGER'
 
-        # LOGICAL can accept INTEGER or REAL
+        # LOGICAL only accepts LOGICAL (no implicit conversion from numeric)
         if target_type == 'LOGICAL':
-            return source_type in ('INTEGER', 'REAL')
+            return False
 
         # CHARACTER can only accept CHARACTER
         if target_type == 'CHARACTER':

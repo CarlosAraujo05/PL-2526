@@ -37,13 +37,6 @@ def p_program(p):
     declarations = p[3] if p[3] else []
     statements = p[4] if p[4] else []
     
-    symtab = p.parser.symbols
-    # Pre-validate declarations (parameters are already added to symtab in p_parameter_declaration)
-    for decl in declarations:
-        if hasattr(decl, 'ids') and decl.ids:
-            # TypeDeclaration: check first variable is declared
-            symtab.lookup(decl.ids[0]['name'], decl.lineno)
-    
     p[0] = Program(
         name=p[2],
         declarations=declarations,
@@ -181,17 +174,17 @@ def p_assignment(p):
 # ============================================================================
 
 def p_labeled_statement(p):
-     r"""labeled_statement : INTEGER_LIT statement
+    r"""labeled_statement : INTEGER_LIT statement
                           | statement"""
-     if len(p) == 2:
-         p[0] = p[1]
-     else:
-         # INTEGER_LIT before a statement acts as a label
-         label_num = int(p[1])
-         p[2].label = label_num
-         p[0] = p[2]
-         # Register label in label_map for GOTO validation
-         p.parser.label_map[label_num] = p.lineno(1)
+    if len(p) == 2:
+        p[0] = p[1]
+    else:
+        # INTEGER_LIT before a statement acts as a label
+        label_num = int(p[1])
+        p[2].label = label_num
+        p[0] = p[2]
+        # Register label in label_map for GOTO validation
+        p.parser.label_map[label_num] = p.lineno(1)
 
 
 def p_statement(p):
@@ -394,7 +387,7 @@ def p_array_access(p):
                     p.lineno(1)
                 )
     
-    p[0] = ArrayAccess(name=p[1], indices=p[3], lineno=p.lineno(1))
+    p[0] = ArrayAccess(name=p[1], index=p[3], lineno=p.lineno(1))
 
 # ============================================================================
 # EXPRESSIONS (operator precedence)
@@ -491,35 +484,35 @@ def p_unary_expression(p):
 
 
 def p_primary_expression(p):
-     r"""primary_expression : literal
+    r"""primary_expression : literal
                            | ID
                            | array_access
                            | '(' expression ')'
                            | function_call"""
-     if len(p) == 2:
-         # Single-token productions: literal, ID, array_access, function_call (all return nodes/values)
-         if isinstance(p[1], str):
-             # ID token - convert to Variable node, validate declaration
-             symtab = p.parser.symbols
-             symtab.lookup(p[1], p.lineno(1))  # Raises SemanticError if not declared
-             p[0] = Variable(name=p[1], lineno=p.lineno(1))
-         else:
-             # literal, array_access, or function_call - already AST nodes
-             p[0] = p[1]
-     else:
-         # len(p) == 4: Parenthesized expression '(' expression ')'
-         p[0] = ParenthesizedExpression(expr=p[2], lineno=p.lineno(1))
+    if len(p) == 2:
+        # Single-token productions: literal, ID, array_access, function_call (all return nodes/values)
+        if isinstance(p[1], str):
+            # ID token - convert to Variable node, validate declaration
+            symtab = p.parser.symbols
+            symtab.lookup(p[1], p.lineno(1))  # Raises SemanticError if not declared
+            p[0] = Variable(name=p[1], lineno=p.lineno(1))
+        else:
+            # literal, array_access, or function_call - already AST nodes
+            p[0] = p[1]
+    else:
+        # len(p) == 4: Parenthesized expression '(' expression ')'
+        p[0] = ParenthesizedExpression(expr=p[2], lineno=p.lineno(1))
 
 
 def p_function_call(p):
-     r"""function_call : ID '(' argument_list ')'
+    r"""function_call : ID '(' argument_list ')'
                       | ID '(' ')'"""
-     if len(p) == 3:
-         # No-args case: ID '(' ')'
-         p[0] = FunctionCall(name=p[1], arguments=[], lineno=p.lineno(1))
-     else:
-         # With-args case: ID '(' argument_list ')'
-         p[0] = FunctionCall(name=p[1], arguments=p[3], lineno=p.lineno(1))
+    if len(p) == 3:
+        # No-args case: ID '(' ')'
+        p[0] = FunctionCall(name=p[1], arguments=[], lineno=p.lineno(1))
+    else:
+        # With-args case: ID '(' argument_list ')'
+        p[0] = FunctionCall(name=p[1], arguments=p[3], lineno=p.lineno(1))
 
 
 def p_argument_list(p):
@@ -553,26 +546,26 @@ def p_literal_false(p):
 # ============================================================================
 
 def p_if_statement(p):
-     r"""if_statement : IF '(' expression ')' THEN statement_block else_clause ENDIF
+    r"""if_statement : IF '(' expression ')' THEN statement_block else_clause ENDIF
                     | IF '(' expression ')' THEN statement_block ENDIF"""
-     then_body = p[6] if p[6] else []
-     
-     if len(p) == 9:
-         # With else_clause: IF '(' expression ')' THEN statement_block else_clause ENDIF (len == 9)
-         else_body = p[7][0] if p[7] and p[7][0] else None
-         elseif_parts = p[7][1] if p[7] and len(p[7]) > 1 else []
-     else:
-         # Without else_clause: IF '(' expression ')' THEN statement_block ENDIF (len == 8)
-         else_body = None
-         elseif_parts = []
-     
-     p[0] = IfThenElse(
-         condition=p[3],
-         then_body=then_body,
-         else_body=else_body,
-         elseif_parts=elseif_parts,
-         lineno=p.lineno(1)
-     )
+    then_body = p[6] if p[6] else []
+    
+    if len(p) == 9:
+        # With else_clause: IF '(' expression ')' THEN statement_block else_clause ENDIF (len == 9)
+        else_body = p[7][0] if p[7] and p[7][0] else None
+        elseif_parts = p[7][1] if p[7] and len(p[7]) > 1 else []
+    else:
+        # Without else_clause: IF '(' expression ')' THEN statement_block ENDIF (len == 8)
+        else_body = None
+        elseif_parts = []
+    
+    p[0] = IfThenElse(
+        condition=p[3],
+        then_body=then_body,
+        else_body=else_body,
+        elseif_parts=elseif_parts,
+        lineno=p.lineno(1)
+    )
 
 
 def p_else_clause(p):
@@ -672,12 +665,12 @@ def p_read_item(p):
 
 
 def p_print_statement(p):
-     r"""print_statement : PRINT '*' ',' output_list
+    r"""print_statement : PRINT '*' ',' output_list
                         | PRINT format ',' output_list"""
-     # Both rules have identical symbol count (4), so parser merges them.
-     # Distinguish at runtime: if p[2] == '*', it's the first rule; else it's the second rule
-     format_spec = p[2] if p[2] != '*' else '*'
-     p[0] = PrintStatement(format_spec=format_spec, expressions=p[4], lineno=p.lineno(1))
+    # Both rules have identical symbol count (4), so parser merges them.
+    # Distinguish at runtime: if p[2] == '*', it's the first rule; else it's the second rule
+    format_spec = p[2] if p[2] != '*' else '*'
+    p[0] = PrintStatement(format_spec=format_spec, expressions=p[4], lineno=p.lineno(1))
 
 
 def p_output_list(p):
@@ -690,12 +683,12 @@ def p_output_list(p):
 
 
 def p_unit(p):
-     r"""unit : INTEGER_LIT
-             | '*'"""
-     if p[1] == '*':
-         p[0] = '*'
-     else:
-         p[0] = Literal(value=p[1], kind='INTEGER', lineno=p.lineno(1))
+    r"""unit : INTEGER_LIT
+            | '*'"""
+    if p[1] == '*':
+        p[0] = '*'
+    else:
+        p[0] = Literal(value=p[1], kind='INTEGER', lineno=p.lineno(1))
 
 
 def p_format(p):
@@ -724,14 +717,14 @@ def p_control_statement(p):
 
 
 def p_call_statement(p):
-     r"""call_statement : CALL ID '(' argument_list ')'
+    r"""call_statement : CALL ID '(' argument_list ')'
                        | CALL ID '(' ')'"""
-     if len(p) == 4:
-         # No-args case: CALL ID '(' ')'
-         p[0] = CallStatement(name=p[2], arguments=[], lineno=p.lineno(1))
-     else:
-         # With-args case: CALL ID '(' argument_list ')'
-         p[0] = CallStatement(name=p[2], arguments=p[4], lineno=p.lineno(1))
+    if len(p) == 4:
+        # No-args case: CALL ID '(' ')'
+        p[0] = CallStatement(name=p[2], arguments=[], lineno=p.lineno(1))
+    else:
+        # With-args case: CALL ID '(' argument_list ')'
+        p[0] = CallStatement(name=p[2], arguments=p[4], lineno=p.lineno(1))
 
 
 def p_continue_statement(p):
@@ -744,60 +737,60 @@ def p_continue_statement(p):
 # ============================================================================
 
 def p_function_definition(p):
-     r"""function_definition : base_type FUNCTION ID '(' parameter_list ')' declaration_block statement_block END
+    r"""function_definition : base_type FUNCTION ID '(' parameter_list ')' declaration_block statement_block END
                              | base_type FUNCTION ID '(' ')' declaration_block statement_block END"""
-     p.parser.current_program_unit = 'function'
-     return_type = p[1]
-     name = p[3]
-     
-     if len(p) == 8:
-         # No parameters: base_type FUNCTION ID '(' ')' declaration_block statement_block END
-         parameters = []
-         declarations = p[6] if p[6] else []
-         body = p[7] if p[7] else []
-     else:
-         # With parameters: base_type FUNCTION ID '(' parameter_list ')' declaration_block statement_block END (len == 9)
-         parameters = p[5] if p[5] else []
-         declarations = p[7] if p[7] else []
-         body = p[8] if p[8] else []
-     
-     p[0] = FunctionDefinition(
-         name=name,
-         return_type=return_type,
-         parameters=parameters,
-         declarations=declarations,
-         body=body,
-         lineno=p.lineno(1)
-     )
-     
-     # Validate function has at least one assignment to function name
-     validate_function_assignments(p[0], p.parser.symbols, p.lineno(1))
+    p.parser.current_program_unit = 'function'
+    return_type = p[1]
+    name = p[3]
+    
+    if len(p) == 8:
+        # No parameters: base_type FUNCTION ID '(' ')' declaration_block statement_block END
+        parameters = []
+        declarations = p[6] if p[6] else []
+        body = p[7] if p[7] else []
+    else:
+        # With parameters: base_type FUNCTION ID '(' parameter_list ')' declaration_block statement_block END (len == 9)
+        parameters = p[5] if p[5] else []
+        declarations = p[7] if p[7] else []
+        body = p[8] if p[8] else []
+    
+    p[0] = FunctionDefinition(
+        name=name,
+        return_type=return_type,
+        parameters=parameters,
+        declarations=declarations,
+        body=body,
+        lineno=p.lineno(1)
+    )
+    
+    # Validate function has at least one assignment to function name
+    validate_function_assignments(p[0], p.parser.symbols, p.lineno(1))
 
 
 def p_subroutine_definition(p):
-     r"""subroutine_definition : SUBROUTINE ID '(' parameter_list ')' declaration_block statement_block END
+    r"""subroutine_definition : SUBROUTINE ID '(' parameter_list ')' declaration_block statement_block END
                                | SUBROUTINE ID '(' ')' declaration_block statement_block END"""
-     p.parser.current_program_unit = 'subroutine'
-     name = p[2]
-     
-     if len(p) == 7:
-         # No parameters: SUBROUTINE ID '(' ')' declaration_block statement_block END
-         parameters = []
-         declarations = p[5] if p[5] else []
-         body = p[6] if p[6] else []
-     else:
-         # With parameters: SUBROUTINE ID '(' parameter_list ')' declaration_block statement_block END (len == 8)
-         parameters = p[4] if p[4] else []
-         declarations = p[6] if p[6] else []
-         body = p[7] if p[7] else []
-     
-     p[0] = SubroutineDefinition(
-         name=name,
-         parameters=parameters,
-         declarations=declarations,
-         body=body,
-         lineno=p.lineno(1)
-     )
+    p.parser.current_program_unit = 'subroutine'
+    name = p[2]
+    
+    if len(p) == 7:
+        # No parameters: SUBROUTINE ID '(' ')' declaration_block statement_block END
+        parameters = []
+        declarations = p[5] if p[5] else []
+        body = p[6] if p[6] else []
+    else:
+        # With parameters: SUBROUTINE ID '(' parameter_list ')' declaration_block statement_block END (len == 8)
+        parameters = p[4] if p[4] else []
+        declarations = p[6] if p[6] else []
+        body = p[7] if p[7] else []
+    
+    p[0] = SubroutineDefinition(
+        name=name,
+        parameters=parameters,
+        declarations=declarations,
+        body=body,
+        lineno=p.lineno(1)
+    )
 
 
 def p_parameter_list(p):
@@ -839,14 +832,14 @@ def p_error(p):
 # ============================================================================
 
 def build_parser(debug=False):
-     r"""Build and return the parser."""
+    r"""Build and return the parser."""
 
-     parser = yacc.yacc(debug=debug, write_tables=True, start='program_unit')
-     parser.symbols = SymbolTable()  # Add symbol table to parser for semantic analysis
-     parser.label_map = {}  # Map: label_number -> lineno
-     parser.goto_list = []  # List of (target_label, lineno)
-     parser.current_program_unit = 'program'  # Track context: 'program', 'function', 'subroutine'
-     return parser
+    parser = yacc.yacc(debug=debug, write_tables=True, start='program_unit')
+    parser.symbols = SymbolTable()  # Add symbol table to parser for semantic analysis
+    parser.label_map = {}  # Map: label_number -> lineno
+    parser.goto_list = []  # List of (target_label, lineno)
+    parser.current_program_unit = 'program'  # Track context: 'program', 'function', 'subroutine'
+    return parser
 
 # ============================================================================
 # MAIN ENTRY POINT

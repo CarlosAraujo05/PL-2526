@@ -271,7 +271,7 @@ typst compile docs/main.typ docs/PL-G52.pdf
 ## Error Handling Conventions
 
 - **Lexical error:** print `Lexical error at line <n>: unexpected character '<c>'`.
-- **Syntax error:** PLY calls `p_error(p)`; print `Syntax error at line <n>: unexpected token '<t>'`
+- **Syntax error:** PLY calls `p_error(p)`; print `Syntax error at line <n>: unexpected token '<t>'` and abort. Parser error recovery is **not required** — a single syntax error is sufficient to halt compilation with a clean message.
 - **Semantic error:** raise `SemanticError(message, lineno)` and catch it in `main.py` to print a clean
   message and exit with code 1.
 - **Never** let the compiler crash with a raw Python traceback on valid or mildly invalid Fortran input.
@@ -310,6 +310,6 @@ When working on tasks in this repository:
 1. **Before touching any file**, identify which module layer the task belongs to (lexer / parser / codegen / IR / tests) and edit only that module.
 2. **After any change to the grammar**, re-run all five test programs end-to-end to detect regressions.
 3. **Do not** add PLY debug output (`debug=True`, `errorlog`) in committed code — gate it behind a `--debug` flag.
-4. **Prefer explicit over implicit** — Fortran implicit typing (undeclared variables starting with I–N are INTEGER) is a known pitfall; decide whether to support it and document the decision.
+4. **No implicit typing or declarations** — This compiler enforces **explicit declaration of all variables**. Fortran 77 implicit typing (variables starting with I–N defaulting to INTEGER) is **not supported**. Every variable, array, and parameter must be declared with an explicit type before use. This is an intentional design decision for stronger type safety and simpler semantic analysis. This policy must be documented in the technical report.
 5. **Label management** — Fortran labels are global to a program unit. Maintain a single `label_map: dict[int, str]` that maps Fortran statement labels to VM jump targets.
 6. When generating code for `IF` / `DO` / `GOTO`, always resolve labels **after** the full AST is built, not inline during parsing, to handle forward references cleanly.

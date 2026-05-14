@@ -173,7 +173,7 @@ class Variable(Expression):
 class ArrayAccess(Expression):
     """Array element access: arr(i)."""
     name: str = ""
-    indices: Optional[Expression] = None 
+    index: Optional[Expression] = None 
 
 
 @dataclass
