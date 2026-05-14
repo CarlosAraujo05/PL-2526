@@ -18,13 +18,22 @@ Higher grades require an intermediate representation (IR), optimisation passes, 
 │   ├── parser.py         # Syntactic + semantic analysis — builds the AST
 │   ├── ast_nodes.py      # AST node class hierarchy
 │   ├── symbol_table.py   # Symbol table implementation
+│   ├── optimizer.py      # AST-level optimisation passes
 │   └── codegen.py        # VM code emitter
 ├── tests/
 │   ├── hello.for
 │   ├── fatorial.for
 │   ├── primo.for
 │   ├── somaarr.for
-│   └── conversor.for
+│   ├── conversor.for
+│   └── test_compiler.py  # Smoke tests: compile all 5 required programs
+├── testsextra/
+│   ├── param_valid.for
+│   ├── param_dup.for
+│   ├── param_assign.for
+│   ├── param_array.for
+│   ├── test_negative.py  # Negative tests: semantic errors (params, type compat)
+│   └── test_optimizer.py # Unit tests for constant folding, dead-store, unreachable code
 ├── docs/
 │   └── main.typ / main.md   # Technical report (≤ 10 pages)
 └── AGENTS.md
@@ -259,8 +268,14 @@ python3 src/main.py tests/fatorial.for | ./vm
 python3 src/lexer.py  tests/file.for
 # Debug the parser / inspect AST
 python3 src/parser.py  tests/file.for
-# Run all tests (once a test harness exists)
-python3 -m pytest tests/
+# Run smoke tests (required programs compilation)
+python3 -m pytest tests/test_compiler.py -v
+# Run negative tests (semantic error detection)
+python3 -m pytest testsextra/test_negative.py -v
+# Run optimizer unit tests
+python3 -m pytest testsextra/test_optimizer.py -v
+# Run all tests
+python3 -m pytest tests/ testsextra/ -v
 
 # Compile the technical report into PDF using Typst
 typst compile docs/main.typ docs/PL-G52.pdf    
