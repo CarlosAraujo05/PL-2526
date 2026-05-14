@@ -8,7 +8,7 @@ Maintains symbol information with support for:
 - Full symbol metadata (name, kind, type, dimensions, line number)
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Optional, Dict
 
 
@@ -300,6 +300,6 @@ class SymbolTable:
         lines = [f"SymbolTable (scope depth: {self.current_scope_level})"]
         for i, scope in enumerate(self.scopes):
             lines.append(f"  Scope {i}:")
-            for name, symbol in scope.items():
+            for _name, symbol in scope.items():
                 lines.append(f"    {symbol}")
         return "\n".join(lines)

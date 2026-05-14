@@ -6,9 +6,17 @@ Builds an abstract syntax tree (AST) from a token stream.
 
 import ply.yacc as yacc
 import sys
-from lexer import tokens, build_lexer
+from lexer import tokens, build_lexer  # tokens required by PLY yacc
 from symbol_table import SymbolTable, SemanticError, Symbol
-from ast_nodes import *
+from ast_nodes import (
+    Program, CompilationUnit, TypeDeclaration, ParameterDeclaration,
+    AssignmentStatement, IfThenElse, DoLoop, GotoStatement,
+    CallStatement, ReadStatement, PrintStatement,
+    ReturnStatement, ContinueStatement,
+    BinaryOp, UnaryOp, Variable, ArrayAccess,
+    FunctionCall, Literal, ParenthesizedExpression,
+    SubroutineDefinition, FunctionDefinition
+)
 
 # ============================================================================
 # PROGRAM STRUCTURE
@@ -851,7 +859,7 @@ def main():
         return
 
     try:
-        with open(sys.argv[1], 'r') as f:
+        with open(sys.argv[1], 'r', encoding='utf-8') as f:
             source = f.read()
 
         lexer = build_lexer(source_text=source)

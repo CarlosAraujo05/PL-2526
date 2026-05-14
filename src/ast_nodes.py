@@ -46,7 +46,6 @@ class CompilationUnit(Node):
 @dataclass
 class Declaration(Node):
     """Base class for all declarations."""
-    pass
 
 
 @dataclass
@@ -129,13 +128,11 @@ class PrintStatement(Statement):
 @dataclass
 class ReturnStatement(Statement):
     """RETURN statement."""
-    pass
 
 
 @dataclass
 class ContinueStatement(Statement):
     """CONTINUE statement."""
-    pass
 
 
 # ============================================================================
@@ -145,7 +142,6 @@ class ContinueStatement(Statement):
 @dataclass
 class Expression(Node):
     """Base class for all expressions."""
-    pass
 
 
 @dataclass
