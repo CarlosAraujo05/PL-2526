@@ -46,7 +46,7 @@ Respect this layout. Do not merge unrelated concerns into a single file.
 | Category | Examples |
 |---|---|
 | Keywords (only these)| `PROGRAM`, `END`, `INTEGER`, `LOGICAL`, `REAL`, `PRINT`, `READ`, `DO`, `CONTINUE`, `IF`, `THEN`, `ELSE`,`ELSEIF`, `ENDIF`, `GOTO`,|
-| |`FUNCTION`, `RETURN`, `DIMENSION`, `SUBROUTINE`, `CALL`, `PARAMETER`, `CHARACTER` |
+| |`FUNCTION`, `RETURN`, `SUBROUTINE`, `CALL`, `PARAMETER`, `CHARACTER` |
 | Logical literals | `.TRUE.`, `.FALSE.` |
 | Relational operators | `.EQ.`, `.NE.`, `.LT.`, `.LE.`, `.GT.`, `.GE.` |
 | Logical operators | `.AND.`, `.OR.`, `.NOT.` |
@@ -136,7 +136,7 @@ class Symbol:
     name: str
     kind: str          # 'variable', 'array', 'function', 'subroutine', 'parameter'
     dtype: str         # 'INTEGER', 'REAL', 'LOGICAL', 'CHARACTER'
-    dimensions: list   # empty for scalars; list of (lower, upper) for arrays
+    dimensions: int    # length of array
     lineno: int        # declaration line, for error messages
 ```
 
@@ -270,9 +270,8 @@ typst compile docs/main.typ docs/PL-G52.pdf
 
 ## Error Handling Conventions
 
-- **Lexical error:** print `Lexical error at line <n>: unexpected character '<c>'` and continue tokenising.
-- **Syntax error:** PLY calls `p_error(p)`; print `Syntax error at line <n>: unexpected token '<t>'` and
-  attempt recovery with `parser.restart()`.
+- **Lexical error:** print `Lexical error at line <n>: unexpected character '<c>'`.
+- **Syntax error:** PLY calls `p_error(p)`; print `Syntax error at line <n>: unexpected token '<t>'`
 - **Semantic error:** raise `SemanticError(message, lineno)` and catch it in `main.py` to print a clean
   message and exit with code 1.
 - **Never** let the compiler crash with a raw Python traceback on valid or mildly invalid Fortran input.

@@ -195,14 +195,15 @@ def t_COMMENT(t):
 # --- Identifier (must come after all keywords and comments) ---
 def t_ID(t):
     r'[A-Za-z][A-Za-z0-9]*'
-    t.value = t.value.upper()  
-    # Fortran 77: max 6 chars. Could be enforced here, by adding '{5}' to the regex instead of '*', 
-    # but we'll allow longer to support the test cases provided. 
+    t.value = t.value.upper()
+    # Fortran 77 limit: truncate identifiers to 6 chars
+    if len(t.value) > 6:
+        t.value = t.value[:6]
     return t
 
 # --- Numeric and string literals ---
 def t_REAL_LIT(t):
-    r'\d+\.\d+([EDed][-+]?\d+)?|\d+[EDed][-+]?\d+'
+    r'(\d+\.\d*|\d*\.\d+)([eEdD][-+]?\d+)?|\d+[eEdD][-+]?\d+'
     t.value = float(t.value)
     return t
 
@@ -278,7 +279,7 @@ class LexerError(Exception):
 
 def t_error(t):
     """Handle illegal characters."""
-    raise LexerError(f"Caractere ilegal: {t.value[0]} na linha {t.lineno}")
+    raise LexerError(f"Lexical error at line {t.lineno}: unexpected character '{t.value[0]}'")
 
 # --- Lexer Factory ---
 
@@ -302,27 +303,27 @@ def build_lexer(debug=False, source_text=None):
 
 def main():
     if len(sys.argv) < 2:
-        print(f"Uso: python {sys.argv[0]} arquivo.for")
+        print(f"Usage: python {sys.argv[0]} <file.for>")
         return
 
     try:
-        with open(sys.argv[1], 'r') as file:
+        with open(sys.argv[1], 'r', encoding='utf-8') as file:
             data = file.read()
         
         # Use preprocessor to handle fixed-format source
         lexer = build_lexer(source_text=data)
         
-        # Loop para imprimir os tokens gerados
+        # Print generated tokens
         for tok in lexer:
             print(tok)
     except FileNotFoundError:
-        print(f"Erro: O arquivo '{sys.argv[1]}' não foi encontrado.")
+        print(f"Error: File '{sys.argv[1]}' not found.")
     except PermissionError:
-        print(f"Erro: Permissão negada para ler o arquivo '{sys.argv[1]}'.")
+        print(f"Error: Permission denied reading file '{sys.argv[1]}'.")
     except LexerError as e:
-        print(f"Erro Léxico: {e}")
+        print(f"Lexer error: {e}")
     except Exception as e:
-        print(f"Ocorreu um erro inesperado: {e}")
+        print(f"Unexpected error: {e}")
 
 if __name__ == "__main__":
     main()
