@@ -1,4 +1,10 @@
 START
+PUSHI 0
+STOREG 0
+PUSHI 0
+STOREG 1
+PUSHI 0
+STOREG 2
 PUSHS "Introduza um numero inteiro positivo:"
 WRITES
 WRITELN

@@ -80,37 +80,25 @@ class CodeGen:
         self.emit("STOP")
 
     def visit_TypeDeclaration(self, node: TypeDeclaration):
-        # For statically allocated vars, we might not need to emit instructions, just reserve addresses.
+        """Reserve addresses for declared variables; allocate arrays on the heap."""
         for id_info in node.ids:
-            if isinstance(id_info, dict):
-                name = id_info['name']
-                dimensions = id_info.get('dimensions')
-                # Only allocate if dimensions is explicitly provided (array declaration)
-                if dimensions is not None:
-                    total_size = 1
-                    if isinstance(dimensions, int):
-                        total_size = dimensions
-                    elif isinstance(dimensions, (list, tuple)):
-                        for dim in dimensions:
-                            if isinstance(dim, (list, tuple)) and len(dim) == 2:
-                                lower, upper = dim
-                                total_size *= (upper - lower + 1)
-                            elif isinstance(dim, int):
-                                total_size *= dim
-                            else:
-                                total_size *= 1
-                    addr = self.get_var_addr(name)
-                    self.emit(f"ALLOC {total_size}")
-                    if self.in_function:
-                        self.emit(f"STOREL {addr}")
-                    else:
-                        self.emit(f"STOREG {addr}")
+            name = id_info['name']
+            dimensions = id_info.get('dimensions')
+            if dimensions is not None:
+                # Unidimensional array: dimensions is an int (size)
+                addr = self.get_var_addr(name)
+                self.emit(f"ALLOC {dimensions}")
+                if self.in_function:
+                    self.emit(f"STOREL {addr}")
                 else:
-                    # Scalar: just reserve an address
-                    self.get_var_addr(name)
+                    self.emit(f"STOREG {addr}")
             else:
-                # Scalar: just reserve an address
-                self.get_var_addr(id_info)
+                # Scalar: reserve address and explicitly zero-initialize
+                addr = self.get_var_addr(name)
+                if not self.in_function:
+                    self.emit("PUSHI 0")
+                    self.emit(f"STOREG {addr}")
+                # Locals are bulk-zeroed by PUSHN in visit_FunctionDefinition
 
     def visit_AssignmentStatement(self, node: AssignmentStatement):
         if isinstance(node.target, Variable):
@@ -213,6 +201,8 @@ class CodeGen:
         pass
 
     def visit_ReturnStatement(self, node: ReturnStatement):
+        # RETURN sets sp = fp, which naturally leaves fp[0] (return value) on top.
+        # No need to push it again — it's already stored there by the assignment.
         self.emit("RETURN")
 
     def visit_ReadStatement(self, node: ReadStatement):
@@ -310,15 +300,18 @@ class CodeGen:
             self.emit("MOD")
             return
         
-        # Push arguments in reverse order so first param is at fp[1]
+        # Reserve return-value slot, then push arguments in reverse order
+        # Reserve a return-value slot on the stack.
+        self.emit("PUSHI 0")
         for arg in reversed(node.arguments):
             self.visit(arg)
         self.emit(f"PUSHA FUNC{node.name}")
         self.emit("CALL")
-        # Clean up arguments from stack, keeping return value on top
-        for _ in node.arguments:
-            self.emit("SWAP")
-            self.emit("POP 1")
+        # RETURN resets sp to the fp saved at CALL time, so the arguments
+        # are still on the stack above the return slot. Pop the arguments
+        # so the return value bubbles to the top.
+        if node.arguments:
+            self.emit(f"POP {len(node.arguments)}")
 
     def visit_CallStatement(self, node: CallStatement):
         for arg in reversed(node.arguments):
@@ -332,63 +325,80 @@ class CodeGen:
     def visit_FunctionDefinition(self, node: FunctionDefinition):
         func_label = f"FUNC{node.name}"
         self.emit(f"{func_label}:")
-        
+
         old_var_map = self.var_map
         old_var_counter = self._var_counter
         old_in_function = self.in_function
+        old_function_name = getattr(self, '_current_function_name', None)
         self.var_map = {}
         self._var_counter = 0
         self.in_function = True
-        
-        # Function name holds the return value at fp[0]
-        self.var_map[node.name] = 0
-        self._var_counter = 1
-        
-        # Parameters at fp[1], fp[2], ...
+        self._current_function_name = node.name
+
+        num_params = len(node.parameters)
+        # Caller pushes args in reverse: last arg first.
+        # After CALL, fp = sp points to the last arg pushed (first param).
+        # e.g. CONVRT(N,B): caller pushes B then N, so fp[0]=N, fp[-1]=B.
         for i, param in enumerate(node.parameters):
-            self.var_map[param] = i + 1
-        self._var_counter = len(node.parameters) + 1
-        
+            self.var_map[param] = -i  # 0, -1, -2, ...
+
+        # Return value sits below all params (caller pushed a zero before args)
+        self.var_map[node.name] = -num_params
+        self._var_counter = 1  # locals start at fp[1]
+
         for decl in node.declarations:
             self.visit(decl)
-        
+
+        # Allocate local variable slots (excluding params and return slot)
+        num_locals = self._var_counter - 1
+        if num_locals > 0:
+            self.emit(f"PUSHN {num_locals}")
+
         for stmt in node.body:
             self.visit(stmt)
-        
+
         # Only emit implicit RETURN if the body doesn't end with an explicit one
         if not node.body or not isinstance(node.body[-1], ReturnStatement):
             self.emit("RETURN")
-        
+
         self.var_map = old_var_map
         self._var_counter = old_var_counter
         self.in_function = old_in_function
+        self._current_function_name = old_function_name
 
     def visit_SubroutineDefinition(self, node: SubroutineDefinition):
         func_label = f"SUBR{node.name}"
         self.emit(f"{func_label}:")
-        
+
         old_var_map = self.var_map
         old_var_counter = self._var_counter
         old_in_function = self.in_function
         self.var_map = {}
         self._var_counter = 0
         self.in_function = True
-        
-        # Parameters at fp[1], fp[2], ...
+
+        # Caller pushes args in reverse: last arg first.
+        # After CALL, fp = sp points to the last arg pushed (first param).
         for i, param in enumerate(node.parameters):
-            self.var_map[param] = i + 1
-        self._var_counter = len(node.parameters) + 1
-        
+            self.var_map[param] = -i  # 0, -1, -2, ...
+
+        self._var_counter = 1  # locals start at fp[1]
+
         for decl in node.declarations:
             self.visit(decl)
-        
+
+        # Allocate local variable slots (excluding parameters)
+        num_locals = self._var_counter - 1
+        if num_locals > 0:
+            self.emit(f"PUSHN {num_locals}")
+
         for stmt in node.body:
             self.visit(stmt)
-        
+
         # Only emit implicit RETURN if the body doesn't end with an explicit one
         if not node.body or not isinstance(node.body[-1], ReturnStatement):
             self.emit("RETURN")
-        
+
         self.var_map = old_var_map
         self._var_counter = old_var_counter
         self.in_function = old_in_function

@@ -91,11 +91,8 @@ def p_type_declaration(p):
         name = id_info['name']
         dims = id_info['dimensions']
         
-        if dims is not None:
-            symbol = Symbol(name=name, kind='array', dtype=dtype, dimensions=dims, lineno=lineno)
-        else:
-            symbol = Symbol(name=name, kind='variable', dtype=dtype, dimensions=None, lineno=lineno)
-        
+        kind = 'array' if dims is not None else 'variable'
+        symbol = Symbol(name=name, kind=kind, dtype=dtype, dimensions=dims, lineno=lineno)
         symtab.declare(symbol)
     
     p[0] = TypeDeclaration(dtype=dtype, ids=p[2], lineno=lineno)
@@ -385,15 +382,12 @@ def p_array_access(p):
     index_expr = p[3]
     if isinstance(index_expr, Literal) and index_expr.kind == 'INTEGER':
         symbol = symtab.lookup(p[1], p.lineno(1))
-        if symbol.dimensions is not None:
-            # Fortran 77 arrays are 1-indexed by default
-            lower_bound = 1
-            upper_bound = symbol.dimensions
-            if not (lower_bound <= index_expr.value <= upper_bound):
-                raise SemanticError(
-                    f"Array index {index_expr.value} out of bounds for '{p[1]}' (valid range: {lower_bound} to {upper_bound})",
-                    p.lineno(1)
-                )
+        # check_array_access already guarantees this is an array (dimensions is not None)
+        if not (1 <= index_expr.value <= symbol.dimensions):
+            raise SemanticError(
+                f"Array index {index_expr.value} out of bounds for '{p[1]}' (valid range: 1 to {symbol.dimensions})",
+                p.lineno(1)
+            )
     
     p[0] = ArrayAccess(name=p[1], index=p[3], lineno=p.lineno(1))
 

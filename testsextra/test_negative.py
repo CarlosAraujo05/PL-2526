@@ -18,18 +18,18 @@ def compile_source(source_path: str) -> subprocess.CompletedProcess:
 
 def test_param_valid_compiles():
     """Valid PARAMETER usage should compile successfully."""
-    result = compile_source("tests/param_valid.for")
+    result = compile_source("testsextra/param_valid.for")
     assert result.returncode == 0, (
         f"Compilation failed unexpectedly\nStdout: {result.stdout}\nStderr: {result.stderr}"
     )
     assert "Compilation successful" in result.stdout
-    vm_file = "tests/param_valid.vm"
+    vm_file = "testsextra/param_valid.vm"
     assert os.path.exists(vm_file), f"VM file {vm_file} was not generated"
 
 
 def test_param_dup_fails():
     """Duplicate PARAMETER declaration should be rejected."""
-    result = compile_source("tests/param_dup.for")
+    result = compile_source("testsextra/param_dup.for")
     assert result.returncode != 0, "Expected compilation to fail"
     combined = result.stdout + result.stderr
     assert "Duplicate parameter declaration" in combined, (
@@ -39,7 +39,7 @@ def test_param_dup_fails():
 
 def test_param_assign_fails():
     """Assignment to a PARAMETER should be rejected."""
-    result = compile_source("tests/param_assign.for")
+    result = compile_source("testsextra/param_assign.for")
     assert result.returncode != 0, "Expected compilation to fail"
     combined = result.stdout + result.stderr
     assert "Cannot assign to parameter" in combined, (
@@ -49,7 +49,7 @@ def test_param_assign_fails():
 
 def test_param_array_fails():
     """PARAMETER on an array should be rejected."""
-    result = compile_source("tests/param_array.for")
+    result = compile_source("testsextra/param_array.for")
     assert result.returncode != 0, "Expected compilation to fail"
     combined = result.stdout + result.stderr
     assert "Cannot assign to array parameter" in combined, (

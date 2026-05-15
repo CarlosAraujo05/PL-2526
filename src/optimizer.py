@@ -26,6 +26,7 @@ class Optimizer:
 
     def __init__(self):
         self.modified = False
+        self._function_name = None  # Track current function for dead-store protection
 
     def optimize(self, node: Node) -> Node:
         """Run optimization passes until fixpoint."""
@@ -87,6 +88,10 @@ class Optimizer:
             if isinstance(stmt, AssignmentStatement):
                 target_name = self._assignment_target_name(stmt.target)
                 if target_name is not None and target_name not in read_vars:
+                    # Protect function return value assignments
+                    if target_name == self._function_name:
+                        result.append(self.visit(stmt))
+                        continue
                     # Dead store — skip it unless RHS has side effects
                     if not self._has_side_effects(stmt.value):
                         self.modified = True
@@ -184,7 +189,10 @@ class Optimizer:
         return node
 
     def visit_FunctionDefinition(self, node):
+        old_name = self._function_name
+        self._function_name = node.name
         node.body = self.optimize_block(node.body)
+        self._function_name = old_name
         return node
 
     def visit_IfThenElse(self, node):

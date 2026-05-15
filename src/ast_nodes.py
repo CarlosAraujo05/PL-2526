@@ -52,7 +52,7 @@ class Declaration(Node):
 class TypeDeclaration(Declaration):
     """Variable type declaration (INTEGER, REAL, etc.)."""
     dtype: str = ""
-    ids: List[str | dict] = field(default_factory=list)  # Either plain str or {'name': str, 'dimensions': list}
+    ids: List[dict] = field(default_factory=list)  # {'name': str, 'dimensions': int | None} for scalar or unidimensional array
 
 
 @dataclass
