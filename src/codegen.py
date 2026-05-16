@@ -186,6 +186,13 @@ class CodeGen:
                     self.emit(f"STOREG {addr}", f"store global {name}")
                 # Locals are bulk-zeroed by PUSHN in visit_FunctionDefinition
 
+    def _emit_assignment_conversion(self, value_type, target_type):
+        """Emit numeric conversion if value and target types differ."""
+        if value_type == 'REAL' and target_type != 'REAL':
+            self._emit_conversion('REAL', target_type)
+        elif value_type != 'REAL' and target_type == 'REAL':
+            self._emit_conversion(value_type, 'REAL')
+
     def visit_AssignmentStatement(self, node: AssignmentStatement):
         target_type = 'INTEGER'
         if isinstance(node.target, Variable):
@@ -199,30 +206,21 @@ class CodeGen:
 
         if isinstance(node.target, Variable):
             self.visit(node.value)
-            if value_type == 'REAL' and target_type != 'REAL':
-                self._emit_conversion('REAL', target_type)
-            elif value_type != 'REAL' and target_type == 'REAL':
-                self._emit_conversion(value_type, 'REAL')
+            self._emit_assignment_conversion(value_type, target_type)
             self._store_var(node.target.name)
         elif isinstance(node.target, ArrayAccess):
             # Array store: push base addr, push index (0-based), push value, STOREN
-            self._push_var(node.target.name)      # address
-            self.visit(node.target.index)         # index (1-based in Fortran)
+            self._push_var(node.target.name)
+            self.visit(node.target.index)
             self.emit("PUSHI 1", "Fortran index is 1-based")
             self.emit("SUB", "convert to 0-based index")
             self.visit(node.value)
-            if value_type == 'REAL' and target_type != 'REAL':
-                self._emit_conversion('REAL', target_type)
-            elif value_type != 'REAL' and target_type == 'REAL':
-                self._emit_conversion(value_type, 'REAL')
+            self._emit_assignment_conversion(value_type, target_type)
             self.emit("STOREN", f"store into array {node.target.name}")
         elif isinstance(node.target, FunctionCall):
             # Assignment to function name (return value)
             self.visit(node.value)
-            if value_type == 'REAL' and target_type != 'REAL':
-                self._emit_conversion('REAL', target_type)
-            elif value_type != 'REAL' and target_type == 'REAL':
-                self._emit_conversion(value_type, 'REAL')
+            self._emit_assignment_conversion(value_type, target_type)
             self._store_var(node.target.name)
 
     def visit_IfThenElse(self, node: IfThenElse):

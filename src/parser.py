@@ -8,15 +8,7 @@ import ply.yacc as yacc
 import sys
 from lexer import tokens, build_lexer  # tokens required by PLY yacc
 from symbol_table import SymbolTable, SemanticError, Symbol
-from ast_nodes import (
-    Program, CompilationUnit, TypeDeclaration, ParameterDeclaration,
-    AssignmentStatement, IfThenElse, DoLoop, GotoStatement,
-    CallStatement, ReadStatement, PrintStatement,
-    ReturnStatement, ContinueStatement,
-    BinaryOp, UnaryOp, Variable, ArrayAccess,
-    FunctionCall, Literal, ParenthesizedExpression,
-    SubroutineDefinition, FunctionDefinition
-)
+from ast_nodes import *
 
 # ============================================================================
 # PROGRAM STRUCTURE
@@ -862,19 +854,6 @@ def main():
 
         if ast:
             print("Parse successful!")
-            # Handle both Program and CompilationUnit
-            if isinstance(ast, CompilationUnit):
-                if ast.main_program:
-                    print(f"Program: {ast.main_program.name}")
-                    print(f"Declarations: {len(ast.main_program.declarations)}")
-                    print(f"Statements: {len(ast.main_program.statements)}")
-                print(f"Subprograms: {len(ast.subprograms)}")
-            else:
-                # Direct Program node
-                print(f"Program: {ast.name}")
-                print(f"Declarations: {len(ast.declarations)}")
-                print(f"Statements: {len(ast.statements)}")
-            # Pretty print AST
             import pprint
             pprint.pprint(ast)
         else:

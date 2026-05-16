@@ -8,4 +8,4 @@ O compilador possui módulos independentes em `src/`:
 - `optimizer.py`: Otimizações na AST (Constant Folding, Dead Code Elimination).
 - `codegen.py`: Geração de instruções VM (Stack machine).
 
-O `main.py` orquestra o pipeline completo: lê `.for`, gera tokens, constrói a AST, otimiza a árvore, e emite código para um ficheiro `.vm`. A separação em fases (Front-end, Middle-end/Optimizer, Back-end) garante uma arquitetura modular, fácil de testar (via `pytest`) e manter.
+O `main.py` orquestra o pipeline completo: lê `.for`, gera tokens, constrói a AST, otimiza a árvore, e emite código para um ficheiro `.vm`. Aceita o _flag_ opcional `--comments` (ou `-c`) para incluir comentários explicativos no ficheiro `.vm` gerado (por omissão, o output é limpo). A separação em fases (Front-end, Middle-end/Optimizer, Back-end) garante uma arquitetura modular, fácil de testar (via `pytest`) e manter.

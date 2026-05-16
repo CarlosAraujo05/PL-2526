@@ -274,27 +274,6 @@ class SymbolTable:
                 lineno
             )
 
-    # ========================================================================
-    # SYMBOL QUERIES
-    # ========================================================================
-
-    def get_all_symbols(self) -> Dict[str, Symbol]:
-        """
-        Get all symbols in current scope (not including parent scopes).
-
-        Returns:
-            Dictionary of symbol name -> Symbol
-        """
-        return self.scopes[self.current_scope_level].copy()
-
-    def get_symbol_count(self) -> int:
-        """Get number of symbols in current scope."""
-        return len(self.scopes[self.current_scope_level])
-
-    def get_scope_depth(self) -> int:
-        """Get current scope depth (0 = global)."""
-        return self.current_scope_level
-
     def __repr__(self) -> str:
         """String representation for debugging."""
         lines = [f"SymbolTable (scope depth: {self.current_scope_level})"]

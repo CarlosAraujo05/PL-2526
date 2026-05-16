@@ -5,22 +5,7 @@ Performs constant folding, unreachable code elimination, and basic dead-store
 elimination at the AST level.
 """
 
-try:
-    from ast_nodes import (
-        Node, Program, CompilationUnit, SubroutineDefinition, FunctionDefinition,
-        IfThenElse, DoLoop, AssignmentStatement, GotoStatement, ReturnStatement,
-        ContinueStatement, PrintStatement, ReadStatement, CallStatement,
-        BinaryOp, UnaryOp, Literal, Variable, ArrayAccess, ParenthesizedExpression,
-        FunctionCall
-    )
-except ImportError:
-    from src.ast_nodes import (
-        Node, Program, CompilationUnit, SubroutineDefinition, FunctionDefinition,
-        IfThenElse, DoLoop, AssignmentStatement, GotoStatement, ReturnStatement,
-        ContinueStatement, PrintStatement, ReadStatement, CallStatement,
-        BinaryOp, UnaryOp, Literal, Variable, ArrayAccess, ParenthesizedExpression,
-        FunctionCall
-    )
+from ast_nodes import *
 
 
 class Optimizer:
@@ -163,10 +148,8 @@ class Optimizer:
         """Check if an expression may have side effects (conservative)."""
         if node is None:
             return False
-        if isinstance(node, (Literal, Variable)):
+        if isinstance(node, (Literal, Variable, ArrayAccess)):
             return False
-        if isinstance(node, ArrayAccess):
-            return True  # could be out of bounds; conservative
         if isinstance(node, FunctionCall):
             return True
         if isinstance(node, ParenthesizedExpression):
