@@ -2,5 +2,5 @@
 
 A disciplina de Processamento de Linguagens foca no estudo de compiladores e estruturas interpretativas. Este projeto consubstancia estes conhecimentos e implementa um compilador integral para a norma original clássica *Fortran 77*, que tem como base a geração estrita de instruções orientadas a uma Stack Virtual Machine (fornecida no âmbito curricular). O programa foi desenhado em *Python 3* recorrendo ativamente à biblioteca de _parsing_ *PLY*. 
 
-O compilador segue e adota na íntegra a arquitetura standard de _compilers_, implementando um fluxo pipeline rigoroso modularizado em _Front-end_ e _Back-end_: pré-processamento de fixed-formats, análise léxica para streams de tokens sintáticos, construção de Árvore AST, análise semântica acoplada por escopo em _Symbol Tables_ e geração nativa de código `.vm` e otimizações. 
+O compilador segue e adota na íntegra a arquitetura standard de _compilers_, implementando um fluxo pipeline rigoroso modularizado: pré-processamento de fixed-formats, análise léxica para streams de tokens sintáticos, construção de Árvore AST, análise semântica acoplada por escopo em _Symbol Tables_ e geração nativa de código `.vm` e otimizações. 
 O presente relatório técnico descreve em detalhe os padrões, fluxos, restrições e as abordagens de _engineering_ seguidas no projeto ao longo das sucessivas camadas.

@@ -1,12 +1,12 @@
 = Otimizações e Geração de Código
 
-== Otimização (Middle-end)
+== Otimização
 Antes de gerar código, a Árvore Sintática Abstrata (AST) passa por um módulo de otimização (`optimizer.py`). Implementámos passagens de otimização focadas na melhoria de performance (valorização), nomeadamente:
 - *Constant Folding*: Expressões binárias (`+`, `-`, `*`, `/`, `**`) e operadores relacionais/lógicos entre literais são avaliados em tempo de compilação, incluindo os limites de ciclos `DO`.
 - *Dead Code Elimination (DCE)*: Remoção de código inatingível (instruções após `GOTO` / `RETURN` sem `label`) e eliminação de *dead stores* (atribuições cujo valor nunca é lido posteriormente no mesmo bloco).
 - *IF Constant Folding*: Quando a condição de um `IF` é um literal lógico (`.TRUE.` ou `.FALSE.`), o ramo correspondente é colapsado diretamente.
 
-== Geração de Código VM (Back-end)
+== Geração de Código VM
 O módulo `codegen.py` implementa o padrão *Visitor* para percorrer a AST e gerar um ficheiro `.vm` com as instruções para a máquina virtual baseada em pilha (stack machine).
 
 === Mapeamento de Construções Fortran
