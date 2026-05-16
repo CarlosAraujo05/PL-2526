@@ -10,14 +10,16 @@ try:
         Node, Program, CompilationUnit, SubroutineDefinition, FunctionDefinition,
         IfThenElse, DoLoop, AssignmentStatement, GotoStatement, ReturnStatement,
         ContinueStatement, PrintStatement, ReadStatement, CallStatement,
-        BinaryOp, UnaryOp, Literal, Variable, ArrayAccess, ParenthesizedExpression
+        BinaryOp, UnaryOp, Literal, Variable, ArrayAccess, ParenthesizedExpression,
+        FunctionCall
     )
 except ImportError:
     from src.ast_nodes import (
         Node, Program, CompilationUnit, SubroutineDefinition, FunctionDefinition,
         IfThenElse, DoLoop, AssignmentStatement, GotoStatement, ReturnStatement,
         ContinueStatement, PrintStatement, ReadStatement, CallStatement,
-        BinaryOp, UnaryOp, Literal, Variable, ArrayAccess, ParenthesizedExpression
+        BinaryOp, UnaryOp, Literal, Variable, ArrayAccess, ParenthesizedExpression,
+        FunctionCall
     )
 
 
@@ -27,6 +29,7 @@ class Optimizer:
     def __init__(self):
         self.modified = False
         self._function_name = None  # Track current function for dead-store protection
+        self._nested_depth = 0      # Track nesting level; dead-store only at depth 0
 
     def optimize(self, node: Node) -> Node:
         """Run optimization passes until fixpoint."""
@@ -76,29 +79,34 @@ class Optimizer:
             if isinstance(stmt, (GotoStatement, ReturnStatement)):
                 reachable = False
 
-        # Pass 2: dead-store elimination
-        # Collect all variables read in this block
-        read_vars = set()
-        for stmt in filtered:
-            read_vars.update(self._collect_reads(stmt))
+        # Pass 2: dead-store elimination (only at top-level blocks)
+        if self._nested_depth == 0:
+            # Collect all variables read in this block
+            read_vars = set()
+            for stmt in filtered:
+                read_vars.update(self._collect_reads(stmt))
 
-        # Keep assignments whose target is read later or has side effects
-        result = []
-        for stmt in filtered:
-            if isinstance(stmt, AssignmentStatement):
-                target_name = self._assignment_target_name(stmt.target)
-                if target_name is not None and target_name not in read_vars:
-                    # Protect function return value assignments
-                    if target_name == self._function_name:
-                        result.append(self.visit(stmt))
-                        continue
-                    # Dead store — skip it unless RHS has side effects
-                    if not self._has_side_effects(stmt.value):
-                        self.modified = True
-                        continue
-            result.append(self.visit(stmt))
+            # Keep assignments whose target is read later or has side effects
+            result = []
+            for stmt in filtered:
+                if isinstance(stmt, AssignmentStatement):
+                    target_name = self._assignment_target_name(stmt.target)
+                    if target_name is not None and target_name not in read_vars:
+                        # Protect function return value assignments
+                        if target_name == self._function_name:
+                            result.append(self.visit(stmt))
+                            continue
+                        # Dead store — skip it unless RHS has side effects
+                        if not self._has_side_effects(stmt.value):
+                            self.modified = True
+                            continue
+                result.append(self.visit(stmt))
 
-        return [s for s in result if s is not None]
+            return [s for s in result if s is not None]
+        else:
+            # Inside nested block — skip dead-store elimination to avoid
+            # removing stores whose target is live in an outer scope.
+            return [self.visit(s) for s in filtered if s is not None]
 
     def _collect_reads(self, node):
         """Collect all variable names read by a node."""
@@ -197,9 +205,11 @@ class Optimizer:
 
     def visit_IfThenElse(self, node):
         node.condition = self.visit(node.condition)
+        self._nested_depth += 1
         node.then_body = self.optimize_block(node.then_body)
         if node.else_body:
             node.else_body = self.optimize_block(node.else_body)
+        self._nested_depth -= 1
         # If condition is a constant literal, fold to single branch
         if isinstance(node.condition, Literal) and node.condition.kind == 'LOGICAL':
             if node.condition.value:
@@ -217,7 +227,9 @@ class Optimizer:
         node.stop = self.visit(node.stop)
         if node.step:
             node.step = self.visit(node.step)
+        self._nested_depth += 1
         node.body = self.optimize_block(node.body)
+        self._nested_depth -= 1
         return node
 
     def visit_AssignmentStatement(self, node):

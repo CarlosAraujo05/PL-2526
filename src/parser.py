@@ -817,16 +817,16 @@ def p_empty(p):
 # ERROR HANDLING
 # ============================================================================
 
-class SyntaxError(Exception):
+class ParserSyntaxError(Exception):
     """Raised when a parse error occurs."""
     pass
 
 
 def p_error(p):
     if p:
-        raise SyntaxError(f"Syntax error at '{p.value}' (line {p.lineno})")
+        raise ParserSyntaxError(f"Syntax error at '{p.value}' (line {p.lineno})")
     else:
-        raise SyntaxError("Syntax error: unexpected end of file")
+        raise ParserSyntaxError("Syntax error: unexpected end of file")
 
 
 # ============================================================================
@@ -882,7 +882,7 @@ def main():
 
     except FileNotFoundError:
         print(f"Error: File '{sys.argv[1]}' not found.")
-    except SyntaxError as e:
+    except ParserSyntaxError as e:
         print(f"Syntax error: {e}")
     except SemanticError as e:
         print(f"Semantic error: {e}")

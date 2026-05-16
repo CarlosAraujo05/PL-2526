@@ -391,18 +391,21 @@ class TestIfConstantFolding:
         # IF (.TRUE.) THEN
         #   X = 5
         # ENDIF
+        # PRINT *, X   <-- keeps X live so dead-store elimination won't remove the assignment
         stmts = [
             IfThenElse(
                 condition=Literal(value=True, kind='LOGICAL'),
                 then_body=[AssignmentStatement(target=Variable(name='X'), value=Literal(value=5, kind='INTEGER'))],
                 else_body=None
-            )
+            ),
+            PrintStatement(expressions=[Variable(name='X')]),
         ]
         prog = Program(name='T', statements=stmts)
         result = opt.optimize(prog)
-        # The IF is kept but condition remains folded; we don't replace IF with its body
-        # because it might change control flow semantics
-        assert len(result.statements) == 1
+        # The IF is folded to its body (X = 5) because the condition is a constant .TRUE.
+        assert len(result.statements) == 2
+        assert isinstance(result.statements[0], AssignmentStatement)
+        assert isinstance(result.statements[1], PrintStatement)
 
     def test_if_false_constant(self, opt):
         # IF (.FALSE.) THEN

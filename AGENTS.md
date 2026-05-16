@@ -213,7 +213,7 @@ method that appends to an internal list; flush to a file at the end.
 | `GOTO label` | `JUMP vm_label` |
 | `PRINT *` | push each arg, `WRITEI` / `WRITEF` / `WRITES` per type |
 | `READ *` | `READ`, store result |
-| `CALL sub(args)` | push args, `PUSHA sub_label`, `CALL`, clean up stack |
+| `CALL sub(args)` | create space for return value if necessary, push args, `PUSHA sub_label`, `CALL`, clean up stack |
 
 Keep a **label counter** (`self._label_counter`) to generate unique VM labels (`L0`, `L1`, …).
 
@@ -324,7 +324,7 @@ When working on tasks in this repository:
 
 1. **Before touching any file**, identify which module layer the task belongs to (lexer / parser / codegen / IR / tests) and edit only that module.
 2. **After any change to the grammar**, re-run all five test programs end-to-end to detect regressions.
-3. **Do not** add PLY debug output (`debug=True`, `errorlog`) in committed code — gate it behind a `--debug` flag.
+3. **Do not** add PLY debug output (`debug=True`, `errorlog`) in committed code. 
 4. **No implicit typing or declarations** — This compiler enforces **explicit declaration of all variables**. Fortran 77 implicit typing (variables starting with I–N defaulting to INTEGER) is **not supported**. Every variable, array, and parameter must be declared with an explicit type before use. This is an intentional design decision for stronger type safety and simpler semantic analysis. This policy must be documented in the technical report.
 5. **Label management** — Fortran labels are global to a program unit. Maintain a single `label_map: dict[int, str]` that maps Fortran statement labels to VM jump targets.
 6. When generating code for `IF` / `DO` / `GOTO`, always resolve labels **after** the full AST is built, not inline during parsing, to handle forward references cleanly.

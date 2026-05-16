@@ -80,126 +80,28 @@ tokens = keywords + operators + ['ID', 'INTEGER_LIT', 'REAL_LIT', 'STRING_LIT']
 
 literals = ['+', '-', '*', '/', '(', ')', ',', '=', ':']
 
-# --- Keyword token definitions (one per keyword, case-insensitive via reflags) ---
-def t_PROGRAM(t):
-    r'PROGRAM'
+# Map identifier strings to their keyword token names.
+# This guarantees that identifiers which are prefixes of keywords
+# (e.g. 'ENDI', 'REALX') are still matched correctly as IDs.
+RESERVED = {kw: kw for kw in keywords}
+
+# --- Identifier (must come before any keyword function so it gets priority) ---
+def t_ID(t):
+    r'[A-Za-z][A-Za-z0-9]*'
     t.value = t.value.upper()
+    # Check reserved words before truncating so that 7-char keywords
+    # (e.g. PROGRAM) are recognised correctly.
+    t.type = RESERVED.get(t.value, 'ID')
+    # Fortran 77 limit: truncate identifiers to 6 chars (only for IDs)
+    if t.type == 'ID' and len(t.value) > 6:
+        t.value = t.value[:6]
     return t
 
-def t_ENDIF(t):
-    r'ENDIF'
-    t.value = t.value.upper()
-    return t
-
-def t_END(t):
-    r'END'
-    t.value = t.value.upper()
-    return t
-
-def t_FUNCTION(t):
-    r'FUNCTION'
-    t.value = t.value.upper()
-    return t
-
-def t_RETURN(t):
-    r'RETURN'
-    t.value = t.value.upper()
-    return t
-
-def t_SUBROUTINE(t):
-    r'SUBROUTINE'
-    t.value = t.value.upper()
-    return t
-
-def t_CALL(t):
-    r'CALL'
-    t.value = t.value.upper()
-    return t
-
-def t_INTEGER(t):
-    r'INTEGER'
-    t.value = t.value.upper()
-    return t
-
-def t_REAL(t):
-    r'REAL'
-    t.value = t.value.upper()
-    return t
-
-def t_LOGICAL(t):
-    r'LOGICAL'
-    t.value = t.value.upper()
-    return t
-
-def t_CHARACTER(t):
-    r'CHARACTER'
-    t.value = t.value.upper()
-    return t
-
-def t_PARAMETER(t):
-    r'PARAMETER'
-    t.value = t.value.upper()
-    return t
-
-def t_IF(t):
-    r'IF'
-    t.value = t.value.upper()
-    return t
-
-def t_THEN(t):
-    r'THEN'
-    t.value = t.value.upper()
-    return t
-
-def t_ELSE(t):
-    r'ELSE'
-    t.value = t.value.upper()
-    return t
-
-def t_ELSEIF(t):
-    r'ELSEIF'
-    t.value = t.value.upper()
-    return t
-
-def t_GOTO(t):
-    r'GOTO'
-    t.value = t.value.upper()
-    return t
-
-def t_DO(t):
-    r'DO'
-    t.value = t.value.upper()
-    return t
-
-def t_CONTINUE(t):
-    r'CONTINUE'
-    t.value = t.value.upper()
-    return t
-
-def t_READ(t):
-    r'READ'
-    t.value = t.value.upper()
-    return t
-
-def t_PRINT(t):
-    r'PRINT'
-    t.value = t.value.upper()
-    return t
-
-# --- Comments (must come before t_ID to have priority) ---
+# --- Comments ---
 def t_COMMENT(t):
     r'!.*'
     t.lexer.lineno += t.value.count('\n')
     return None
-
-# --- Identifier (must come after all keywords and comments) ---
-def t_ID(t):
-    r'[A-Za-z][A-Za-z0-9]*'
-    t.value = t.value.upper()
-    # Fortran 77 limit: truncate identifiers to 6 chars
-    if len(t.value) > 6:
-        t.value = t.value[:6]
-    return t
 
 # --- Numeric and string literals ---
 def t_REAL_LIT(t):
