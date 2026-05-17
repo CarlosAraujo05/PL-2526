@@ -7,7 +7,7 @@ and ParenthesizedExpression simplification in isolation.
 
 import pytest
 from src.optimizer import Optimizer
-from ast_nodes import (
+from src.ast_nodes import (
     Program, Literal, Variable, BinaryOp, UnaryOp,
     AssignmentStatement, IfThenElse, DoLoop,
     GotoStatement, ReturnStatement, PrintStatement,

@@ -2,7 +2,8 @@
 
 A análise léxica é o primeiro passo da conduta, garantindo a decomposição da fonte Fortran num fluxo contínuo de _tokens_ validados. Desenvolvida no módulo `lexer.py` usando `ply.lex`, garante o tratamento nativo do *Fixed-Format* do Fortran 77:
 - *Colunas 1-5*: Reservadas unicamente para numeração de identificação local de instruções (Labels/GOTO targets).
-- *Coluna 6*: Reservada como caracter de controlo de contiguidade de linha ou denotação de comentário (quando `C` ou `*`).
+- *Coluna 1*: Comentário de linha completa quando contém `C`, `c`, `*` ou `!`.
+- *Coluna 6*: Reservada como caracter de continuação (qualquer símbolo não vazio indica continuação).
 - *Colunas 7-72*: Espaço principal para a escrita do corpo sintático.
 
 A nível preparatório, o pré-processador interno normaliza o source _in memory_ para remover os comentários explícitos e unir quebras formatadas contíguas. 

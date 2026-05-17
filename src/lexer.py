@@ -26,16 +26,16 @@ class FortranPreprocessor:
             line = line.ljust(72)
             
             label_part = line[0:5].strip()       # Columns 1-5
-            cont_char = line[5]                 # Column 6
-            statement_part = line[6:72]         # Columns 7-72
-            
-            # Skip comment lines (C, c, *, or ! in column 6)
-            if cont_char in ('C', 'c', '*', '!'):
+            cont_char = line[5]                  # Column 6
+            statement_part = line[6:72]          # Columns 7-72
+
+            # Skip full-line comments (C/c/*/! in column 1)
+            if line[0] in ('C', 'c', '*', '!'):
                 self.continuation_buffer = ''
                 continue
-            
-            # Handle continuation lines (digit 0-9 in column 6)
-            if cont_char.isdigit():
+
+            # Handle continuation lines (any non-blank in column 6)
+            if cont_char not in (' ', '0'):
                 self.continuation_buffer += ' ' + statement_part
                 continue
             

@@ -5,7 +5,10 @@ Performs constant folding, unreachable code elimination, and basic dead-store
 elimination at the AST level.
 """
 
-from ast_nodes import *
+try:
+    from ast_nodes import *
+except ModuleNotFoundError:
+    from src.ast_nodes import *
 
 
 class Optimizer:

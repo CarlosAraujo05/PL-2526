@@ -13,3 +13,5 @@ A automação garante a verificação contínua (CI) e testa os seguintes progra
 - `conversor.for`: Valida a compatibilidade e a transição entre múltiplos subprogramas (Funções e Procedimentos).
 
 Em todos os casos, a suite não só avalia o sucesso da fase léxica e sintática (sem levantar erros do parser/lexer) mas constrói a AST, realiza as otimizações Middle-end via `optimizer.py`, e efetivamente emite o binário (`.vm`). Todos os 5 testes garantem retorno de código de erro zero.
+
+Para além destes testes positivos, existem testes extra (em `testsextra/`) que validam falhas esperadas em regras semânticas (PARAMETER, incompatibilidade de tipos) e um conjunto dedicado de testes unitários ao optimizador (constant folding, DCE, remoção de código inatingível).
